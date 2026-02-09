@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,6 +83,26 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(e => new { e.UserId, e.CourseId }).IsUnique();
+        });
+
+        // ── LessonProgress ──
+        modelBuilder.Entity<LessonProgress>(entity =>
+        {
+            entity.HasKey(lp => lp.Id);
+
+            entity.Property(lp => lp.IsCompleted).IsRequired();
+
+            entity.HasOne(lp => lp.User)
+                  .WithMany(u => u.LessonProgresses)
+                  .HasForeignKey(lp => lp.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(lp => lp.Lesson)
+                  .WithMany(l => l.LessonProgresses)
+                  .HasForeignKey(lp => lp.LessonId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(lp => new { lp.UserId, lp.LessonId }).IsUnique();
         });
     }
 }

@@ -23,19 +23,8 @@ public class EnrollmentController : ControllerBase
     [HttpPost("{courseId:guid}")]
     public async Task<IActionResult> Enroll(Guid courseId)
     {
-        try
-        {
-            var enrollment = await _enrollmentService.EnrollAsync(GetUserId(), courseId);
-            return Created($"api/enrollments/{enrollment.Id}", enrollment);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
+        var enrollment = await _enrollmentService.EnrollAsync(GetUserId(), courseId);
+        return Created($"api/enrollments/{enrollment.Id}", enrollment);
     }
 
     [HttpGet("my-courses")]
@@ -48,14 +37,7 @@ public class EnrollmentController : ControllerBase
     [HttpDelete("{courseId:guid}")]
     public async Task<IActionResult> Unenroll(Guid courseId)
     {
-        try
-        {
-            await _enrollmentService.UnenrollAsync(GetUserId(), courseId);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        await _enrollmentService.UnenrollAsync(GetUserId(), courseId);
+        return NoContent();
     }
 }

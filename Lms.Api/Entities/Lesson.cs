@@ -10,4 +10,5 @@ public class Lesson
     public DateTime CreatedAt { get; set; }
 
     public Course Course { get; set; } = null!;
+    public ICollection<LessonProgress> LessonProgresses { get; set; } = new List<LessonProgress>();
 }

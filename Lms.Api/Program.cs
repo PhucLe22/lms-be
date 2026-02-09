@@ -1,5 +1,6 @@
 using System.Text;
 using Lms.Api.Data;
+using Lms.Api.Middleware;
 using Lms.Api.Services;
 using Lms.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -39,6 +40,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<ILessonProgressService, LessonProgressService>();
 
 // ── JWT Authentication ──────────────────────────────────────
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -118,6 +120,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ── Middleware ───────────────────────────────────────────────
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 app.UseSwagger();
 app.UseSwaggerUI();
 

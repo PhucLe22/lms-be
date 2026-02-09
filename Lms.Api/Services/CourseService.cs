@@ -1,4 +1,5 @@
 using Lms.Api.Data;
+using Lms.Api.DTOs.Common;
 using Lms.Api.DTOs.Course;
 using Lms.Api.DTOs.Lesson;
 using Lms.Api.Entities;
@@ -16,10 +17,24 @@ public class CourseService : ICourseService
         _db = db;
     }
 
-    public async Task<List<CourseDto>> GetAllCoursesAsync()
+    public async Task<PaginatedResult<CourseDto>> GetAllCoursesAsync(string? search, int page, int pageSize)
     {
-        return await _db.Courses
-            .AsNoTracking()
+        var query = _db.Courses.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(c =>
+                c.Title.ToLower().Contains(term) ||
+                c.Description.ToLower().Contains(term));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(c => c.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(c => new CourseDto
             {
                 Id = c.Id,
@@ -31,6 +46,14 @@ public class CourseService : ICourseService
                 EnrollmentCount = c.Enrollments.Count
             })
             .ToListAsync();
+
+        return new PaginatedResult<CourseDto>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<CourseDetailDto> GetCourseByIdAsync(Guid courseId)

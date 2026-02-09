@@ -21,24 +21,20 @@ public class CourseController : ControllerBase
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var courses = await _courseService.GetAllCoursesAsync();
-        return Ok(courses);
+        var result = await _courseService.GetAllCoursesAsync(search, page, pageSize);
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        try
-        {
-            var course = await _courseService.GetCourseByIdAsync(id);
-            return Ok(course);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var course = await _courseService.GetCourseByIdAsync(id);
+        return Ok(course);
     }
 
     [HttpPost]
@@ -53,37 +49,15 @@ public class CourseController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCourseDto dto)
     {
-        try
-        {
-            var course = await _courseService.UpdateCourseAsync(id, dto, GetUserId());
-            return Ok(course);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
+        var course = await _courseService.UpdateCourseAsync(id, dto, GetUserId());
+        return Ok(course);
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await _courseService.DeleteCourseAsync(id, GetUserId());
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
+        await _courseService.DeleteCourseAsync(id, GetUserId());
+        return NoContent();
     }
 }

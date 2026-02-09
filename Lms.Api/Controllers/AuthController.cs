@@ -20,29 +20,15 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
-        try
-        {
-            var result = await _authService.RegisterAsync(dto);
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
+        var result = await _authService.RegisterAsync(dto);
+        return Ok(result);
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        try
-        {
-            var result = await _authService.LoginAsync(dto);
-            return Ok(result);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new { message = ex.Message });
-        }
+        var result = await _authService.LoginAsync(dto);
+        return Ok(result);
     }
 
     [HttpGet("me")]
@@ -50,14 +36,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GetMe()
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        try
-        {
-            var result = await _authService.GetMeAsync(userId);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var result = await _authService.GetMeAsync(userId);
+        return Ok(result);
     }
 }
