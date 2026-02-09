@@ -27,7 +27,7 @@ public class AppDbContext : DbContext
 
             entity.Property(u => u.PasswordHash).IsRequired();
             entity.Property(u => u.Role).IsRequired().HasMaxLength(20);
-            entity.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(u => u.CreatedAt).HasDefaultValueSql("now() at time zone 'utc'");
         });
 
         // ── Course ──
@@ -37,7 +37,7 @@ public class AppDbContext : DbContext
 
             entity.Property(c => c.Title).IsRequired().HasMaxLength(300);
             entity.Property(c => c.Description).HasMaxLength(2000);
-            entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(c => c.CreatedAt).HasDefaultValueSql("now() at time zone 'utc'");
 
             entity.HasOne(c => c.Creator)
                   .WithMany(u => u.CreatedCourses)
@@ -53,7 +53,7 @@ public class AppDbContext : DbContext
             entity.Property(l => l.Title).IsRequired().HasMaxLength(300);
             entity.Property(l => l.Content).IsRequired();
             entity.Property(l => l.OrderIndex).IsRequired();
-            entity.Property(l => l.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(l => l.CreatedAt).HasDefaultValueSql("now() at time zone 'utc'");
 
             entity.HasOne(l => l.Course)
                   .WithMany(c => c.Lessons)
@@ -68,7 +68,7 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
 
-            entity.Property(e => e.EnrolledAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.EnrolledAt).HasDefaultValueSql("now() at time zone 'utc'");
             entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
 
             entity.HasOne(e => e.User)
