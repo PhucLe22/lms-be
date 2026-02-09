@@ -1,12 +1,12 @@
 # LMS Backend API
 
-A Learning Management System backend built with **ASP.NET Core 9**, **EF Core Code First**, and **SQL Server**.
+A Learning Management System backend built with **ASP.NET Core 9**, **EF Core Code First**, and **PostgreSQL**.
 
 ## Tech Stack
 
 - .NET 9 Web API
 - Entity Framework Core 9 (Code First)
-- SQL Server
+- PostgreSQL (Production – Render) / SQL Server (Local optional)
 - JWT Authentication
 - BCrypt password hashing
 - Swagger / Swashbuckle
@@ -76,14 +76,14 @@ Lms.Api/
 ### Prerequisites
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- SQL Server (or Docker)
+- PostgreSQL (or Docker)
 
-### Run SQL Server with Docker
+### Run PostgreSQL with Docker
 
 ```bash
-docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourPassword123" \
-  -p 1433:1433 --name lms-sql \
-  -d mcr.microsoft.com/mssql/server:2022-latest
+docker run -e "POSTGRES_PASSWORD=YourPassword123" \
+  -p 5432:5432 --name lms-pg \
+  -d postgres:16
 ```
 
 ### Setup
@@ -98,7 +98,7 @@ docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourPassword123" \
    ```json
    {
      "ConnectionStrings": {
-       "DefaultConnection": "Server=localhost,1433;Database=LmsDb;User Id=sa;Password=YOUR_PASSWORD;TrustServerCertificate=True;MultipleActiveResultSets=true"
+       "DefaultConnection": "Host=localhost;Port=5432;Database=LmsDb;Username=postgres;Password=YOUR_PASSWORD"
      },
      "Jwt": {
        "Key": "YourSecretKeyAtLeast32BytesLong!",
@@ -109,18 +109,31 @@ docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourPassword123" \
    }
    ```
 
-3. Apply migrations & run
+3. Run (auto-migrates on startup)
    ```bash
    cd Lms.Api
-   dotnet ef database update
    dotnet run
    ```
 
 4. Open Swagger UI at `http://localhost:5038/swagger`
 
+## Deploy to Render
+
+1. Create **PostgreSQL** on Render (Free tier)
+2. Create **Web Service** → connect GitHub repo → Runtime: **Docker**
+3. Set environment variables:
+
+   | Key | Value |
+   |-----|-------|
+   | `DATABASE_URL` | *(auto from linked Render PostgreSQL)* |
+   | `Jwt__Key` | Your secret key (32+ bytes) |
+   | `Jwt__Issuer` | `LmsApi` |
+   | `Jwt__Audience` | `LmsApiUsers` |
+   | `Jwt__ExpiryInHours` | `3` |
+
 ### Seed Data
 
-The app seeds automatically on first run:
+The app auto-migrates and seeds on first run:
 
 | Role | Email | Password |
 |------|-------|----------|
