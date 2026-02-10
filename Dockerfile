@@ -3,6 +3,7 @@ WORKDIR /src
 
 COPY lms-be.sln .
 COPY Lms.Api/Lms.Api.csproj Lms.Api/
+COPY Lms.Tests/Lms.Tests.csproj Lms.Tests/
 RUN dotnet restore
 
 COPY . .

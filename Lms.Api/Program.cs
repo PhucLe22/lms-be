@@ -22,8 +22,8 @@ if (!string.IsNullOrWhiteSpace(databaseUrl))
         $"Host={uri.Host};" +
         $"Port={uri.Port};" +
         $"Database={uri.AbsolutePath.TrimStart('/')};" +
-        $"Username={userInfo[0]};" +
-        $"Password={userInfo[1]};" +
+        $"Username={Uri.UnescapeDataString(userInfo[0])};" +
+        $"Password={Uri.UnescapeDataString(userInfo[1])};" +
         $"SSL Mode=Require;Trust Server Certificate=true";
 }
 else
