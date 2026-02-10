@@ -6,10 +6,11 @@ A Learning Management System backend built with **ASP.NET Core 9**, **EF Core Co
 
 - .NET 9 Web API
 - Entity Framework Core 9 (Code First)
-- PostgreSQL (Production – Render) / SQL Server (Local optional)
+- PostgreSQL (Production – Render) / Docker (Local)
 - JWT Authentication
 - BCrypt password hashing
 - Swagger / Swashbuckle
+- xUnit + EF Core InMemory for unit testing
 
 ## Architecture
 
@@ -23,14 +24,20 @@ Lms.Api/
 ├── Data/                 # DbContext & seed data
 ├── DTOs/                 # Request/response models
 │   ├── Auth/
+│   ├── Common/
 │   ├── Course/
 │   ├── Enrollment/
-│   └── Lesson/
+│   ├── Lesson/
+│   └── LessonProgress/
 ├── Entities/             # EF Core entities
+├── Middleware/            # Global exception handling
 ├── Migrations/
 ├── Services/
 │   └── Interfaces/
 └── Program.cs
+
+Lms.Tests/
+└── Services/             # Unit tests (xUnit + InMemory DB)
 ```
 
 ## API Endpoints
@@ -116,6 +123,21 @@ docker run -e "POSTGRES_PASSWORD=YourPassword123" \
    ```
 
 4. Open Swagger UI at `http://localhost:5038/swagger`
+
+### Running Tests
+
+```bash
+# Run all tests
+make test
+
+# Or without Make
+dotnet test --verbosity normal
+
+# Run tests for a specific service
+make test-auth
+make test-course
+make test-enrollment
+```
 
 ## Deploy to Render
 
