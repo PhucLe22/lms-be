@@ -39,4 +39,18 @@ public class AuthController : ControllerBase
         var result = await _authService.GetMeAsync(userId);
         return Ok(result);
     }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        await _authService.ForgotPasswordAsync(dto);
+        return Ok(new { message = "If the email exists, a reset link has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        await _authService.ResetPasswordAsync(dto);
+        return Ok(new { message = "Password has been reset successfully." });
+    }
 }

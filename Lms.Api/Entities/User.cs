@@ -9,6 +9,9 @@ public class User
     public string Role { get; set; } = "Student";
     public DateTime CreatedAt { get; set; }
 
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetTokenExpiry { get; set; }
+
     public ICollection<Course> CreatedCourses { get; set; } = new List<Course>();
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     public ICollection<LessonProgress> LessonProgresses { get; set; } = new List<LessonProgress>();

@@ -36,11 +36,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // ── Services (DI) ───────────────────────────────────────────
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ILessonProgressService, LessonProgressService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // ── JWT Authentication ──────────────────────────────────────
 var jwtSettings = builder.Configuration.GetSection("Jwt");

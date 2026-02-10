@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Lms.Api.Data;
 using Lms.Api.DTOs.Auth;
@@ -14,11 +15,15 @@ public class AuthService : IAuthService
 {
     private readonly AppDbContext _db;
     private readonly IConfiguration _config;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(AppDbContext db, IConfiguration config)
+    public AuthService(AppDbContext db, IConfiguration config, IEmailService emailService, ILogger<AuthService> logger)
     {
         _db = db;
         _config = config;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
@@ -86,6 +91,45 @@ public class AuthService : IAuthService
             Role = user.Role,
             CreatedAt = user.CreatedAt
         };
+    }
+
+    public async Task ForgotPasswordAsync(ForgotPasswordDto dto)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email.ToLower());
+        if (user is null)
+            return; // Don't reveal if email exists
+
+        var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        user.PasswordResetToken = token;
+        user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+        await _db.SaveChangesAsync();
+
+        var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:5173";
+        var resetLink = $"{frontendUrl}/reset-password?token={token}";
+
+        try
+        {
+            await _emailService.SendPasswordResetEmailAsync(user.Email, resetLink);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send password reset email to {Email}", user.Email);
+        }
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordDto dto)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u =>
+            u.PasswordResetToken == dto.Token &&
+            u.PasswordResetTokenExpiry > DateTime.UtcNow);
+
+        if (user is null)
+            throw new UnauthorizedAccessException("Invalid or expired reset token.");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        user.PasswordResetToken = null;
+        user.PasswordResetTokenExpiry = null;
+        await _db.SaveChangesAsync();
     }
 
     private string GenerateJwtToken(User user)
