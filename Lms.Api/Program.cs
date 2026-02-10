@@ -1,9 +1,13 @@
 using System.Text;
+using System.Threading.RateLimiting;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Lms.Api.Data;
 using Lms.Api.Middleware;
 using Lms.Api.Services;
 using Lms.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -35,6 +39,74 @@ else
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+// ── Redis Distributed Cache ────────────────────────────────
+var redisUrl = Environment.GetEnvironmentVariable("REDIS_URL");
+var redisConnection = redisUrl ?? builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnection;
+    options.InstanceName = "lms:";
+});
+
+// ── Hangfire (Background Jobs) ─────────────────────────────
+builder.Services.AddHangfire(config =>
+{
+    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UsePostgreSqlStorage(opts =>
+            opts.UseNpgsqlConnection(connectionString));
+});
+builder.Services.AddHangfireServer();
+
+// ── Rate Limiting (.NET 8+ built-in) ───────────────────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Auth endpoints: 10 requests per minute (brute-force protection)
+    options.AddFixedWindowLimiter("auth", opt =>
+    {
+        opt.PermitLimit = 10;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 2;
+    });
+
+    // Public endpoints (course listing, etc.): 200 requests per minute
+    options.AddFixedWindowLimiter("public", opt =>
+    {
+        opt.PermitLimit = 200;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 5;
+    });
+
+    // Authenticated user endpoints: 300 requests per minute
+    options.AddFixedWindowLimiter("authenticated", opt =>
+    {
+        opt.PermitLimit = 300;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 10;
+    });
+
+    // Admin endpoints: 300 requests per minute
+    options.AddFixedWindowLimiter("admin", opt =>
+    {
+        opt.PermitLimit = 300;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 10;
+    });
+});
+
+// ── Health Checks ──────────────────────────────────────────
+builder.Services.AddHealthChecks()
+    .AddNpgSql(connectionString, name: "postgresql", tags: ["ready"])
+    .AddRedis(redisConnection, name: "redis", tags: ["ready"]);
+
 // ── Services (DI) ───────────────────────────────────────────
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -43,6 +115,9 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ILessonProgressService, LessonProgressService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<IPracticeService, PracticeService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // ── JWT Authentication ──────────────────────────────────────
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -144,11 +219,33 @@ app.UseHttpsRedirection();
 
 app.UseCors();
 
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
+// ── Hangfire Dashboard (Admin only) ─────────────────────────
+app.MapHangfireDashboard("/hangfire");
+
+// ── Hangfire Recurring Jobs ─────────────────────────────────
+RecurringJob.AddOrUpdate<BackgroundJobService>(
+    "cleanup-stale-progress",
+    x => x.CleanupStaleProgressRecords(),
+    Cron.Daily);
+
+// ── Health Check Endpoints ──────────────────────────────────
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false // No checks, just confirms app is running
+});
+
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
+
+app.MapHealthChecks("/health");
 
 app.Run();

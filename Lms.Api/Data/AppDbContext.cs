@@ -12,6 +12,10 @@ public class AppDbContext : DbContext
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
+    public DbSet<Quiz> Quizzes => Set<Quiz>();
+    public DbSet<QuizResult> QuizResults => Set<QuizResult>();
+    public DbSet<PracticeTask> PracticeTasks => Set<PracticeTask>();
+    public DbSet<PracticeSubmission> PracticeSubmissions => Set<PracticeSubmission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,6 +45,7 @@ public class AppDbContext : DbContext
 
             entity.Property(c => c.Title).IsRequired().HasMaxLength(300);
             entity.Property(c => c.Description).HasMaxLength(2000);
+            entity.Property(c => c.Level).IsRequired().HasMaxLength(20).HasDefaultValue("Beginner");
             entity.Property(c => c.CreatedAt).HasDefaultValueSql("now() at time zone 'utc'");
 
             entity.HasOne(c => c.Creator)
@@ -56,6 +61,8 @@ public class AppDbContext : DbContext
 
             entity.Property(l => l.Title).IsRequired().HasMaxLength(300);
             entity.Property(l => l.Content).IsRequired();
+            entity.Property(l => l.VideoUrl).HasMaxLength(500);
+            entity.Property(l => l.DocumentUrl).HasMaxLength(500);
             entity.Property(l => l.OrderIndex).IsRequired();
             entity.Property(l => l.CreatedAt).HasDefaultValueSql("now() at time zone 'utc'");
 
@@ -93,6 +100,7 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(lp => lp.Id);
 
+            entity.Property(lp => lp.VideoWatchPercent).IsRequired().HasDefaultValue(0);
             entity.Property(lp => lp.IsCompleted).IsRequired();
 
             entity.HasOne(lp => lp.User)
@@ -106,6 +114,84 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(lp => new { lp.UserId, lp.LessonId }).IsUnique();
+        });
+
+        // ── Quiz ──
+        modelBuilder.Entity<Quiz>(entity =>
+        {
+            entity.HasKey(q => q.Id);
+
+            entity.Property(q => q.Question).IsRequired().HasMaxLength(1000);
+            entity.Property(q => q.OptionA).IsRequired().HasMaxLength(500);
+            entity.Property(q => q.OptionB).IsRequired().HasMaxLength(500);
+            entity.Property(q => q.OptionC).IsRequired().HasMaxLength(500);
+            entity.Property(q => q.OptionD).IsRequired().HasMaxLength(500);
+            entity.Property(q => q.CorrectAnswer).IsRequired().HasMaxLength(1);
+            entity.Property(q => q.OrderIndex).IsRequired();
+            entity.Property(q => q.CreatedAt).HasDefaultValueSql("now() at time zone 'utc'");
+
+            entity.HasOne(q => q.Lesson)
+                  .WithMany(l => l.Quizzes)
+                  .HasForeignKey(q => q.LessonId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── QuizResult ──
+        modelBuilder.Entity<QuizResult>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+
+            entity.Property(r => r.TotalQuestions).IsRequired();
+            entity.Property(r => r.CorrectAnswers).IsRequired();
+            entity.Property(r => r.Score).IsRequired();
+            entity.Property(r => r.CompletedAt).HasDefaultValueSql("now() at time zone 'utc'");
+
+            entity.HasOne(r => r.User)
+                  .WithMany(u => u.QuizResults)
+                  .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.Lesson)
+                  .WithMany()
+                  .HasForeignKey(r => r.LessonId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(r => new { r.UserId, r.LessonId }).IsUnique();
+        });
+
+        // ── PracticeTask ──
+        modelBuilder.Entity<PracticeTask>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+
+            entity.Property(t => t.Title).IsRequired().HasMaxLength(300);
+            entity.Property(t => t.Description).IsRequired().HasMaxLength(5000);
+            entity.Property(t => t.CreatedAt).HasDefaultValueSql("now() at time zone 'utc'");
+
+            entity.HasOne(t => t.Lesson)
+                  .WithMany()
+                  .HasForeignKey(t => t.LessonId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── PracticeSubmission ──
+        modelBuilder.Entity<PracticeSubmission>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+
+            entity.Property(s => s.SubmissionType).IsRequired().HasMaxLength(20);
+            entity.Property(s => s.Content).IsRequired().HasMaxLength(5000);
+            entity.Property(s => s.SubmittedAt).HasDefaultValueSql("now() at time zone 'utc'");
+
+            entity.HasOne(s => s.PracticeTask)
+                  .WithMany(t => t.Submissions)
+                  .HasForeignKey(s => s.PracticeTaskId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.User)
+                  .WithMany(u => u.PracticeSubmissions)
+                  .HasForeignKey(s => s.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

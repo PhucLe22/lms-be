@@ -2,8 +2,11 @@ using Lms.Api.Data;
 using Lms.Api.DTOs.Auth;
 using Lms.Api.Entities;
 using Lms.Api.Services;
+using Lms.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace Lms.Tests.Services;
 
@@ -30,7 +33,9 @@ public class AuthServiceTests : IDisposable
             })
             .Build();
 
-        _sut = new AuthService(_db, config);
+        var emailService = new Mock<IEmailService>();
+        var logger = new Mock<ILogger<AuthService>>();
+        _sut = new AuthService(_db, config, emailService.Object, logger.Object);
     }
 
     public void Dispose() => _db.Dispose();

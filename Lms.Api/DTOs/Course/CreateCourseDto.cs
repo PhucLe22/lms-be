@@ -9,4 +9,7 @@ public class CreateCourseDto
 
     [MaxLength(2000)]
     public string Description { get; init; } = string.Empty;
+
+    [RegularExpression("^(Beginner|Intermediate|Advanced)$", ErrorMessage = "Level must be 'Beginner', 'Intermediate', or 'Advanced'.")]
+    public string Level { get; init; } = "Beginner";
 }

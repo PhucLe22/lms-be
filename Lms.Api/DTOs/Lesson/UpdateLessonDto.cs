@@ -10,6 +10,12 @@ public class UpdateLessonDto
     [Required]
     public string Content { get; init; } = string.Empty;
 
+    [MaxLength(500)]
+    public string? VideoUrl { get; init; }
+
+    [MaxLength(500)]
+    public string? DocumentUrl { get; init; }
+
     [Range(0, int.MaxValue)]
     public int OrderIndex { get; init; }
 }

@@ -15,4 +15,6 @@ public class User
     public ICollection<Course> CreatedCourses { get; set; } = new List<Course>();
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     public ICollection<LessonProgress> LessonProgresses { get; set; } = new List<LessonProgress>();
+    public ICollection<QuizResult> QuizResults { get; set; } = new List<QuizResult>();
+    public ICollection<PracticeSubmission> PracticeSubmissions { get; set; } = new List<PracticeSubmission>();
 }

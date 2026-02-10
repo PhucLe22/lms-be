@@ -41,6 +41,13 @@ namespace Lms.Api.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Beginner");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -103,6 +110,10 @@ namespace Lms.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("now() at time zone 'utc'");
 
+                    b.Property<string>("DocumentUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer");
 
@@ -110,6 +121,10 @@ namespace Lms.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
+
+                    b.Property<string>("VideoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.HasKey("Id");
 
@@ -145,6 +160,163 @@ namespace Lms.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("LessonProgresses");
+                });
+
+            modelBuilder.Entity("Lms.Api.Entities.PracticeSubmission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)");
+
+                    b.Property<Guid>("PracticeTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SubmissionType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now() at time zone 'utc'");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PracticeTaskId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PracticeSubmissions");
+                });
+
+            modelBuilder.Entity("Lms.Api.Entities.PracticeTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now() at time zone 'utc'");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)");
+
+                    b.Property<Guid>("LessonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LessonId");
+
+                    b.ToTable("PracticeTasks");
+                });
+
+            modelBuilder.Entity("Lms.Api.Entities.Quiz", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CorrectAnswer")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now() at time zone 'utc'");
+
+                    b.Property<Guid>("LessonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("OptionA")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("OptionB")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("OptionC")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("OptionD")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LessonId");
+
+                    b.ToTable("Quizzes");
+                });
+
+            modelBuilder.Entity("Lms.Api.Entities.QuizResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CompletedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now() at time zone 'utc'");
+
+                    b.Property<int>("CorrectAnswers")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("LessonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalQuestions")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LessonId");
+
+                    b.HasIndex("UserId", "LessonId")
+                        .IsUnique();
+
+                    b.ToTable("QuizResults");
                 });
 
             modelBuilder.Entity("Lms.Api.Entities.User", b =>
@@ -252,6 +424,66 @@ namespace Lms.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Lms.Api.Entities.PracticeSubmission", b =>
+                {
+                    b.HasOne("Lms.Api.Entities.PracticeTask", "PracticeTask")
+                        .WithMany("Submissions")
+                        .HasForeignKey("PracticeTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Lms.Api.Entities.User", "User")
+                        .WithMany("PracticeSubmissions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PracticeTask");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Lms.Api.Entities.PracticeTask", b =>
+                {
+                    b.HasOne("Lms.Api.Entities.Lesson", "Lesson")
+                        .WithMany()
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lesson");
+                });
+
+            modelBuilder.Entity("Lms.Api.Entities.Quiz", b =>
+                {
+                    b.HasOne("Lms.Api.Entities.Lesson", "Lesson")
+                        .WithMany("Quizzes")
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lesson");
+                });
+
+            modelBuilder.Entity("Lms.Api.Entities.QuizResult", b =>
+                {
+                    b.HasOne("Lms.Api.Entities.Lesson", "Lesson")
+                        .WithMany()
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Lms.Api.Entities.User", "User")
+                        .WithMany("QuizResults")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lesson");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Lms.Api.Entities.Course", b =>
                 {
                     b.Navigation("Enrollments");
@@ -262,6 +494,13 @@ namespace Lms.Api.Migrations
             modelBuilder.Entity("Lms.Api.Entities.Lesson", b =>
                 {
                     b.Navigation("LessonProgresses");
+
+                    b.Navigation("Quizzes");
+                });
+
+            modelBuilder.Entity("Lms.Api.Entities.PracticeTask", b =>
+                {
+                    b.Navigation("Submissions");
                 });
 
             modelBuilder.Entity("Lms.Api.Entities.User", b =>
@@ -271,6 +510,10 @@ namespace Lms.Api.Migrations
                     b.Navigation("Enrollments");
 
                     b.Navigation("LessonProgresses");
+
+                    b.Navigation("PracticeSubmissions");
+
+                    b.Navigation("QuizResults");
                 });
 #pragma warning restore 612, 618
         }

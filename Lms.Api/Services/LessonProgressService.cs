@@ -29,6 +29,30 @@ public class LessonProgressService : ILessonProgressService
         if (!enrolled)
             throw new InvalidOperationException("You must be enrolled in this course.");
 
+        // Check video watch requirement (>= 80%)
+        if (!string.IsNullOrEmpty(lesson.VideoUrl))
+        {
+            var existingProgress = await _db.LessonProgresses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(lp => lp.UserId == userId && lp.LessonId == lessonId);
+
+            var watchPercent = existingProgress?.VideoWatchPercent ?? 0;
+            if (watchPercent < 80)
+                throw new InvalidOperationException(
+                    $"You must watch at least 80% of the video before completing this lesson. Current: {watchPercent}%.");
+        }
+
+        // Check quiz completion requirement
+        var hasQuizzes = await _db.Quizzes.AnyAsync(q => q.LessonId == lessonId);
+        if (hasQuizzes)
+        {
+            var hasQuizResult = await _db.QuizResults
+                .AnyAsync(qr => qr.UserId == userId && qr.LessonId == lessonId);
+            if (!hasQuizResult)
+                throw new InvalidOperationException(
+                    "You must complete the quiz before marking this lesson as completed.");
+        }
+
         var progress = await _db.LessonProgresses
             .FirstOrDefaultAsync(lp => lp.UserId == userId && lp.LessonId == lessonId);
 
@@ -57,7 +81,58 @@ public class LessonProgressService : ILessonProgressService
             LessonId = lesson.Id,
             LessonTitle = lesson.Title,
             OrderIndex = lesson.OrderIndex,
+            VideoWatchPercent = progress.VideoWatchPercent,
             IsCompleted = true,
+            CompletedAt = progress.CompletedAt
+        };
+    }
+
+    public async Task<LessonProgressDto> UpdateVideoProgressAsync(Guid userId, Guid lessonId, int watchPercent)
+    {
+        var lesson = await _db.Lessons
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.Id == lessonId);
+
+        if (lesson is null)
+            throw new KeyNotFoundException($"Lesson {lessonId} not found.");
+
+        var enrolled = await _db.Enrollments
+            .AnyAsync(e => e.UserId == userId && e.CourseId == lesson.CourseId);
+        if (!enrolled)
+            throw new InvalidOperationException("You must be enrolled in this course.");
+
+        watchPercent = Math.Clamp(watchPercent, 0, 100);
+
+        var progress = await _db.LessonProgresses
+            .FirstOrDefaultAsync(lp => lp.UserId == userId && lp.LessonId == lessonId);
+
+        if (progress is null)
+        {
+            progress = new LessonProgress
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                LessonId = lessonId,
+                VideoWatchPercent = watchPercent
+            };
+            _db.LessonProgresses.Add(progress);
+        }
+        else
+        {
+            // Only allow increasing watch percent (prevent cheating by resending lower values)
+            if (watchPercent > progress.VideoWatchPercent)
+                progress.VideoWatchPercent = watchPercent;
+        }
+
+        await _db.SaveChangesAsync();
+
+        return new LessonProgressDto
+        {
+            LessonId = lesson.Id,
+            LessonTitle = lesson.Title,
+            OrderIndex = lesson.OrderIndex,
+            VideoWatchPercent = progress.VideoWatchPercent,
+            IsCompleted = progress.IsCompleted,
             CompletedAt = progress.CompletedAt
         };
     }
@@ -96,6 +171,7 @@ public class LessonProgressService : ILessonProgressService
                 LessonId = l.Id,
                 LessonTitle = l.Title,
                 OrderIndex = l.OrderIndex,
+                VideoWatchPercent = l.Progress?.VideoWatchPercent ?? 0,
                 IsCompleted = l.Progress?.IsCompleted ?? false,
                 CompletedAt = l.Progress?.CompletedAt
             }).ToList()

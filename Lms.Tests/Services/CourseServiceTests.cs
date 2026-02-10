@@ -3,6 +3,10 @@ using Lms.Api.DTOs.Course;
 using Lms.Api.Entities;
 using Lms.Api.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Lms.Tests.Services;
 
@@ -31,7 +35,11 @@ public class CourseServiceTests : IDisposable
         });
         _db.SaveChanges();
 
-        _sut = new CourseService(_db);
+        var cache = new MemoryDistributedCache(
+            Options.Create(new MemoryDistributedCacheOptions()));
+        var logger = NullLogger<CourseService>.Instance;
+
+        _sut = new CourseService(_db, cache, logger);
     }
 
     public void Dispose() => _db.Dispose();
@@ -172,7 +180,7 @@ public class CourseServiceTests : IDisposable
         }
         await _db.SaveChangesAsync();
 
-        var result = await _sut.GetAllCoursesAsync(null, page: 1, pageSize: 2);
+        var result = await _sut.GetAllCoursesAsync(null, null, page: 1, pageSize: 2);
 
         Assert.Equal(2, result.Items.Count);
         Assert.Equal(3, result.TotalCount);
@@ -194,7 +202,7 @@ public class CourseServiceTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        var result = await _sut.GetAllCoursesAsync("c#", page: 1, pageSize: 10);
+        var result = await _sut.GetAllCoursesAsync("c#", null, page: 1, pageSize: 10);
 
         Assert.Single(result.Items);
         Assert.Equal("C# Basics", result.Items[0].Title);

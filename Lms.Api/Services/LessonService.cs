@@ -30,6 +30,8 @@ public class LessonService : ILessonService
                 Id = l.Id,
                 Title = l.Title,
                 Content = l.Content,
+                VideoUrl = l.VideoUrl,
+                DocumentUrl = l.DocumentUrl,
                 OrderIndex = l.OrderIndex,
                 CreatedAt = l.CreatedAt
             })
@@ -50,6 +52,8 @@ public class LessonService : ILessonService
             CourseId = courseId,
             Title = dto.Title,
             Content = dto.Content,
+            VideoUrl = dto.VideoUrl,
+            DocumentUrl = dto.DocumentUrl,
             OrderIndex = dto.OrderIndex,
             CreatedAt = DateTime.UtcNow
         };
@@ -62,6 +66,8 @@ public class LessonService : ILessonService
             Id = lesson.Id,
             Title = lesson.Title,
             Content = lesson.Content,
+            VideoUrl = lesson.VideoUrl,
+            DocumentUrl = lesson.DocumentUrl,
             OrderIndex = lesson.OrderIndex,
             CreatedAt = lesson.CreatedAt
         };
@@ -80,6 +86,8 @@ public class LessonService : ILessonService
 
         lesson.Title = dto.Title;
         lesson.Content = dto.Content;
+        lesson.VideoUrl = dto.VideoUrl;
+        lesson.DocumentUrl = dto.DocumentUrl;
         lesson.OrderIndex = dto.OrderIndex;
         await _db.SaveChangesAsync();
 
@@ -88,6 +96,8 @@ public class LessonService : ILessonService
             Id = lesson.Id,
             Title = lesson.Title,
             Content = lesson.Content,
+            VideoUrl = lesson.VideoUrl,
+            DocumentUrl = lesson.DocumentUrl,
             OrderIndex = lesson.OrderIndex,
             CreatedAt = lesson.CreatedAt
         };
