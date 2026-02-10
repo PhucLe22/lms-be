@@ -39,15 +39,22 @@ else
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// ── Redis Distributed Cache ────────────────────────────────
+// ── Distributed Cache (Redis or In-Memory fallback) ───────
 var redisUrl = Environment.GetEnvironmentVariable("REDIS_URL");
-var redisConnection = redisUrl ?? builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+var redisConnection = redisUrl ?? builder.Configuration.GetConnectionString("Redis");
 
-builder.Services.AddStackExchangeRedisCache(options =>
+if (!string.IsNullOrWhiteSpace(redisConnection))
 {
-    options.Configuration = redisConnection;
-    options.InstanceName = "lms:";
-});
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnection;
+        options.InstanceName = "lms:";
+    });
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
 
 // ── Hangfire (Background Jobs) ─────────────────────────────
 builder.Services.AddHangfire(config =>
@@ -103,9 +110,13 @@ builder.Services.AddRateLimiter(options =>
 });
 
 // ── Health Checks ──────────────────────────────────────────
-builder.Services.AddHealthChecks()
-    .AddNpgSql(connectionString, name: "postgresql", tags: ["ready"])
-    .AddRedis(redisConnection, name: "redis", tags: ["ready"]);
+var healthChecks = builder.Services.AddHealthChecks()
+    .AddNpgSql(connectionString, name: "postgresql", tags: ["ready"]);
+
+if (!string.IsNullOrWhiteSpace(redisConnection))
+{
+    healthChecks.AddRedis(redisConnection, name: "redis", tags: ["ready"]);
+}
 
 // ── Services (DI) ───────────────────────────────────────────
 builder.Services.AddScoped<IEmailService, EmailService>();
