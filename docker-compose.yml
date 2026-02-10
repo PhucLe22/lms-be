@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    container_name: lms-pg
+    env_file: .env
+    environment:
+      POSTGRES_DB: LmsDb
+    ports:
+      - "5432:5432"
+    volumes:
+      - lms-data:/var/lib/postgresql/data
+
+volumes:
+  lms-data:

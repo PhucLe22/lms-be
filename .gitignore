@@ -15,6 +15,7 @@ obj/
 ## Secrets — never commit real credentials
 appsettings.Development.json
 appsettings.*.local.json
+.env
 
 ## OS
 .DS_Store
