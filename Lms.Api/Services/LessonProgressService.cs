@@ -87,6 +87,37 @@ public class LessonProgressService : ILessonProgressService
         };
     }
 
+    public async Task<LessonProgressDto> UncompleteLessonAsync(Guid userId, Guid lessonId)
+    {
+        var lesson = await _db.Lessons
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.Id == lessonId);
+
+        if (lesson is null)
+            throw new KeyNotFoundException($"Lesson {lessonId} not found.");
+
+        var progress = await _db.LessonProgresses
+            .FirstOrDefaultAsync(lp => lp.UserId == userId && lp.LessonId == lessonId);
+
+        if (progress is null || !progress.IsCompleted)
+            throw new InvalidOperationException("This lesson is not marked as completed.");
+
+        progress.IsCompleted = false;
+        progress.CompletedAt = null;
+
+        await _db.SaveChangesAsync();
+
+        return new LessonProgressDto
+        {
+            LessonId = lesson.Id,
+            LessonTitle = lesson.Title,
+            OrderIndex = lesson.OrderIndex,
+            VideoWatchPercent = progress.VideoWatchPercent,
+            IsCompleted = false,
+            CompletedAt = null
+        };
+    }
+
     public async Task<LessonProgressDto> UpdateVideoProgressAsync(Guid userId, Guid lessonId, int watchPercent)
     {
         var lesson = await _db.Lessons

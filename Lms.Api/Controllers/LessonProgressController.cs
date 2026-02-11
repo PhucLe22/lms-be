@@ -30,6 +30,13 @@ public class LessonProgressController : ControllerBase
         return Ok(ApiResponse<LessonProgressDto>.Ok(result));
     }
 
+    [HttpPost("api/lessons/{lessonId:guid}/uncomplete")]
+    public async Task<IActionResult> UncompleteLesson(Guid lessonId)
+    {
+        var result = await _progressService.UncompleteLessonAsync(GetUserId(), lessonId);
+        return Ok(ApiResponse<LessonProgressDto>.Ok(result));
+    }
+
     [HttpPut("api/lessons/{lessonId:guid}/watch-progress")]
     public async Task<IActionResult> UpdateVideoProgress(Guid lessonId, [FromBody] UpdateVideoProgressDto dto)
     {
