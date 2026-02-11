@@ -265,6 +265,15 @@ public static class DbInitializer
                 VideoUrl = "https://www.youtube.com/watch?v=Ilv0e_R_0E0",
                 DocumentUrl = "https://learn.microsoft.com/en-us/ef/core/querying/",
                 OrderIndex = 3, CreatedAt = DateTime.UtcNow
+            },
+            new Lesson
+            {
+                Id = Guid.NewGuid(), CourseId = course3.Id,
+                Title = "Stored Procedures & Advanced T-SQL",
+                Content = "Stored procedures, views, triggers, CTEs, window functions, query optimization.",
+                VideoUrl = "https://www.youtube.com/watch?v=LnKsNq1VsPY",
+                DocumentUrl = "https://learn.microsoft.com/en-us/sql/t-sql/statements/create-procedure-transact-sql",
+                OrderIndex = 4, CreatedAt = DateTime.UtcNow
             }
         );
 
@@ -376,6 +385,15 @@ public static class DbInitializer
                 VideoUrl = "https://www.youtube.com/watch?v=R8_veQiYBjI",
                 DocumentUrl = "https://docs.github.com/en/actions/quickstart",
                 OrderIndex = 3, CreatedAt = DateTime.UtcNow
+            },
+            new Lesson
+            {
+                Id = Guid.NewGuid(), CourseId = course6.Id,
+                Title = "Container Orchestration & Deployment",
+                Content = "Docker Hub, container registry, Docker Swarm basics, deploying to cloud services.",
+                VideoUrl = "https://www.youtube.com/watch?v=Wf2eSG3owoA",
+                DocumentUrl = "https://docs.docker.com/engine/swarm/",
+                OrderIndex = 4, CreatedAt = DateTime.UtcNow
             }
         );
 
@@ -487,6 +505,15 @@ public static class DbInitializer
                 VideoUrl = "https://www.youtube.com/watch?v=7roqteWLw4s",
                 DocumentUrl = "https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests",
                 OrderIndex = 3, CreatedAt = DateTime.UtcNow
+            },
+            new Lesson
+            {
+                Id = Guid.NewGuid(), CourseId = course9.Id,
+                Title = "Code Coverage & CI Testing",
+                Content = "Code coverage tools, Coverlet, test reporting, integrating tests into CI/CD pipelines.",
+                VideoUrl = "https://www.youtube.com/watch?v=jGG9COIFHiQ",
+                DocumentUrl = "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-code-coverage",
+                OrderIndex = 4, CreatedAt = DateTime.UtcNow
             }
         );
 
