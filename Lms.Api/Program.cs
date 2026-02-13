@@ -130,6 +130,11 @@ builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IPracticeService, PracticeService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
+// ── Google OAuth ────────────────────────────────────────────
+var ggClientId = Environment.GetEnvironmentVariable("GG_CLIENT_ID");
+if (!string.IsNullOrWhiteSpace(ggClientId))
+    builder.Configuration["Google:ClientId"] = ggClientId;
+
 // ── JWT Authentication ──────────────────────────────────────
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);

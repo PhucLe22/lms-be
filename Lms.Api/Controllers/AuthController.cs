@@ -34,6 +34,13 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<AuthResponseDto>.Ok(result));
     }
 
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto dto)
+    {
+        var result = await _authService.GoogleLoginAsync(dto);
+        return Ok(ApiResponse<AuthResponseDto>.Ok(result));
+    }
+
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> GetMe()

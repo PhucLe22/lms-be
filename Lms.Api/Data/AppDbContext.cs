@@ -30,12 +30,16 @@ public class AppDbContext : DbContext
             entity.Property(u => u.Email).IsRequired().HasMaxLength(200);
             entity.HasIndex(u => u.Email).IsUnique();
 
-            entity.Property(u => u.PasswordHash).IsRequired();
+            entity.Property(u => u.PasswordHash).IsRequired(false);
             entity.Property(u => u.Role).IsRequired().HasMaxLength(20);
             entity.Property(u => u.CreatedAt).HasDefaultValueSql("now() at time zone 'utc'");
 
             entity.Property(u => u.PasswordResetToken).HasMaxLength(128);
             entity.Property(u => u.PasswordResetTokenExpiry);
+
+            entity.Property(u => u.GoogleId).HasMaxLength(128);
+            entity.HasIndex(u => u.GoogleId).IsUnique().HasFilter("\"GoogleId\" IS NOT NULL");
+            entity.Property(u => u.AvatarUrl).HasMaxLength(500);
         });
 
         // ── Course ──

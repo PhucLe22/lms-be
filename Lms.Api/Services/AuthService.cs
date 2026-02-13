@@ -8,6 +8,7 @@ using Lms.Api.Entities;
 using Lms.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Google.Apis.Auth;
 
 namespace Lms.Api.Services;
 
@@ -61,8 +62,80 @@ public class AuthService : IAuthService
         if (user is null)
             throw new UnauthorizedAccessException("Invalid email or password.");
 
-        if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+        if (string.IsNullOrEmpty(user.PasswordHash) ||
+            !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid email or password.");
+
+        var token = GenerateJwtToken(user);
+        return new AuthResponseDto
+        {
+            Token = token,
+            Email = user.Email,
+            FullName = user.FullName,
+            Role = user.Role
+        };
+    }
+
+    public async Task<AuthResponseDto> GoogleLoginAsync(GoogleLoginDto dto)
+    {
+        var clientId = _config["Google:ClientId"]
+            ?? throw new InvalidOperationException("Google ClientId is not configured.");
+
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { clientId }
+                });
+        }
+        catch (InvalidJwtException)
+        {
+            throw new UnauthorizedAccessException("Invalid Google ID token.");
+        }
+
+        if (!payload.EmailVerified)
+            throw new UnauthorizedAccessException("Google email is not verified.");
+
+        var googleId = payload.Subject;
+        var email = payload.Email.ToLower();
+        var fullName = payload.Name ?? email;
+        var avatarUrl = payload.Picture;
+
+        // 1. Find by GoogleId
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.GoogleId == googleId);
+
+        // 2. If not found, try to link existing account by email
+        if (user is null)
+        {
+            user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user is not null)
+            {
+                user.GoogleId = googleId;
+                user.AvatarUrl ??= avatarUrl;
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        // 3. Create new user if not found
+        if (user is null)
+        {
+            user = new User
+            {
+                Id = Guid.NewGuid(),
+                FullName = fullName,
+                Email = email,
+                GoogleId = googleId,
+                AvatarUrl = avatarUrl,
+                Role = "Student",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+        }
 
         var token = GenerateJwtToken(user);
         return new AuthResponseDto
@@ -158,3 +231,4 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
+
