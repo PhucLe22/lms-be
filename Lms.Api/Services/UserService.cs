@@ -102,6 +102,9 @@ public class UserService : IUserService
         if (user is null)
             throw new KeyNotFoundException("User not found.");
 
+        if (user.Role == "Admin")
+            throw new InvalidOperationException("Cannot delete an admin account.");
+
         _db.Users.Remove(user);
         await _db.SaveChangesAsync();
     }
@@ -111,6 +114,9 @@ public class UserService : IUserService
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
         if (user is null)
             throw new KeyNotFoundException("User not found.");
+
+        if (user.Role == "Admin")
+            throw new InvalidOperationException("Cannot modify an admin account.");
 
         user.Role = dto.Role;
         await _db.SaveChangesAsync();
