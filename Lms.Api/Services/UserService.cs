@@ -115,9 +115,6 @@ public class UserService : IUserService
         if (user is null)
             throw new KeyNotFoundException("User not found.");
 
-        if (user.Role == "Admin")
-            throw new InvalidOperationException("Cannot modify an admin account.");
-
         user.Role = dto.Role;
         await _db.SaveChangesAsync();
 
