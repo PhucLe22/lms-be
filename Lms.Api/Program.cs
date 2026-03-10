@@ -22,9 +22,10 @@ if (!string.IsNullOrWhiteSpace(databaseUrl))
 {
     var uri = new Uri(databaseUrl);
     var userInfo = uri.UserInfo.Split(':');
+    var port = uri.Port > 0 ? uri.Port : 5432;
     connectionString =
         $"Host={uri.Host};" +
-        $"Port={uri.Port};" +
+        $"Port={port};" +
         $"Database={uri.AbsolutePath.TrimStart('/')};" +
         $"Username={Uri.UnescapeDataString(userInfo[0])};" +
         $"Password={Uri.UnescapeDataString(userInfo[1])};" +
