@@ -16,6 +16,12 @@ build:
 test:
 	dotnet test Lms.Tests --verbosity normal
 
+test-integration:
+	dotnet test Lms.IntegrationTests --verbosity normal
+
+test-all:
+	dotnet test --verbosity normal
+
 test-auth:
 	dotnet test Lms.Tests --filter "FullyQualifiedName~AuthServiceTests" --verbosity normal
 
