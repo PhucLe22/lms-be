@@ -20,6 +20,10 @@ public class CourseController : ControllerBase
         _courseService = courseService;
     }
 
+    // private Guid GetUserId()
+    // {
+    // return Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    // }
     private Guid GetUserId() =>
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 

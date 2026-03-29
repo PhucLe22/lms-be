@@ -15,14 +15,15 @@ public static class ApplicationBuilderExtensions
     {
         app.UseMiddleware<GlobalExceptionMiddleware>();
         
-        // Swagger only in development
-        if (app.ApplicationServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+        // Swagger enabled in all environments (for Railway demo)
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "LMS API v1");
+            options.RoutePrefix = "swagger";
+        });
 
-        app.UseHttpsRedirection();
+        // app.UseHttpsRedirection(); // Disabled for Railway (handled by proxy)
         app.UseCors();
         app.UseRateLimiter();
         app.UseAuthentication();
